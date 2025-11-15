@@ -4,12 +4,12 @@ from IPython.display import display, clear_output
 import matplotlib.animation as animation
 
 import importlib
-#from modules 
-import base_model as bm 
-#from modules 
-import obstacles as obs
+from modules import base_model as bm 
+from modules import obstacles as obs
+from modules import attractor as att
 importlib.reload(bm)
 importlib.reload(obs)
+importlib.reload(att)
 
 def update_quiver(q, x, y, vx, vy):
     # Updates the arrows on the plot.
@@ -219,7 +219,7 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
     else:
         for iT in range(Nt):
             # Use obstacles step, not the base model.
-            x, y, vx, vy, theta = obs.step(x, y, vx, vy, theta, dt, L, A, O,
+            x, y, vx, vy, theta = att.step(x, y, vx, vy, theta, dt, L, A, O,
                                 lam_c, lam_a, lam_m, lam_o, lam_att, eta, v0, R, x_obs, y_obs, attractor_pos)
             
             q = update_quiver(q, x, y, vx, vy)

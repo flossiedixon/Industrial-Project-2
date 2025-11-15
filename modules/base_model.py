@@ -16,15 +16,15 @@ def initialize_birds(N, L, v0):
     '''
 
     # Bird positions - an N-dimensional ndarray.
-    x = np.random.rand(N, 1)*L
-    y = np.random.rand(N, 1)*L
+    #x = np.random.rand(N, 1)*2
+    #y = np.random.rand(N, 1)*2
     #------------------------------------------------
     #Could add input arguments, say x_range, y_range. List/array with a min and max values. Should obviously be within our grid L
     #initial position of each bird will be min + a random value between min and max
-    # x_range = [2, 4]
-    # y_range = [2, 4]
-    # x = x[0] + ( np.random.rand(N, 1) * (x[1] - x[0]) )
-    # y = y[0] + ( np.random.rand(N, 1) * (y[1] - y[0]) )
+    x_range = [0, 4]
+    y_range = [0, 4]
+    x = x_range[0] + ( np.random.rand(N, 1) * (x_range[1] - x_range[0]) )
+    y = y_range[0] + ( np.random.rand(N, 1) * (y_range[1] - y_range[0]) )
     #-------------------------------------------------------
 
     # Matching bird velocities, split into x and y components.
