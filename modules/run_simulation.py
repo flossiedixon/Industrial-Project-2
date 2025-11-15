@@ -4,8 +4,10 @@ from IPython.display import display, clear_output
 import matplotlib.animation as animation
 
 import importlib
-from modules import base_model as bm 
-from modules import obstacles as obs
+#from modules 
+import base_model as bm 
+#from modules 
+import obstacles as obs
 importlib.reload(bm)
 importlib.reload(obs)
 
@@ -138,6 +140,87 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
             # Use obstacles step, not the base model.
             x, y, vx, vy, theta = obs.step(x, y, vx, vy, theta, dt, L, A, O,
                                 lam_c, lam_a, lam_m, lam_o, eta, v0, R, x_obs, y_obs)
+            
+            q = update_quiver(q, x, y, vx, vy)
+            clear_output(wait = True)
+            display(fig)
+        
+        plt.close(fig)
+        return fig, ax
+    
+def plot_simulation_att(model_params, strength_params, obstacle_params, attractor_pos, fig = None, ax = None, seed = 10, save = False):
+    ''' 
+    Runs a simulation depending on the parameters.
+    If a figure is provided, it plots it there. Otherwise it creates one.
+
+    Input:
+        model_params (list or tuple): contains v0, eta, L, dt, Nt, N.
+        strength_params (list or tuple): contains lam_c, lam_a, lam_m, A, R.
+
+    Output:
+        Currently nothing. If we want to store the fig/axis objects, or the final
+            positions and velocities, can be returned.
+    '''
+
+    rng_state = np.random.get_state()
+    np.random.seed(seed)
+
+    # Unpack the arguments.
+    v0, eta, L, dt, Nt, N = model_params
+    lam_c, lam_a, lam_m, lam_att, A, R = strength_params 
+
+    # Obstacle parameters: lam_0, x_obs, y_obs, O (the radius).
+    lam_o, x_obs, y_obs, O = obstacle_params
+
+    if (fig is None) or (ax is None):
+        fig, ax = plt.subplots(figsize = (10, 10))
+
+    # Get the initial configuration
+    x, y, vx, vy, theta = bm.initialize_birds(N, L, v0)
+
+    # Do an initial plot and set up the axes.
+    q = ax.quiver(x, y, vx, vy, scale = 50)
+    ax.set(xlim = (0, L), ylim = (0, L))
+    ax.set_aspect('equal')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+
+    # Plot the obstacle and it's 'force-field' effect.
+    main_circle = plt.Circle((x_obs, y_obs), 0.5*O, color = 'red', alpha = 1.0)
+    inner_circle = plt.Circle((x_obs, y_obs), 0.25*O, color = 'red', alpha = 0.3)
+    outer_circle = plt.Circle((x_obs, y_obs), O, color = 'red', alpha = 0.1)
+    ax.add_patch(main_circle);  ax.add_patch(inner_circle); ax.add_patch(outer_circle)
+
+    # ADDED FOR saving the animation - needs a mutable (changeable) structure.
+    state = [x, y, vx, vy, theta, q]
+    
+    # You can ignore this block - it's only used if wanting to save the animation as mp4.
+    if (save):
+        def update(frame):
+            # Same process as in loop, 'global' tells Python to use the variables outside
+            # the loop. Could make it a list/dict instead
+            state[0], state[1], state[2], state[3], state[4] = obs.step(
+                state[0], state[1], state[2], state[3], state[4],
+                dt, L, A, O, lam_c, lam_a, lam_m, lam_o, eta, v0, R, x_obs, y_obs)
+            
+            update_quiver(q, state[0], state[1], state[2], state[3])
+
+            # Need to return a tuple for animation function.
+            return (q, )
+
+        bird_ani = animation.FuncAnimation(fig, update, frames = Nt, interval = 50, blit = False)
+
+        # Random number on path so they don't overwrite (idk, ad-hoc).
+        np.random.set_state(rng_state)
+        randint = np.random.randint(1, 1e5)
+
+        path = f'movies/flocking{randint}.gif'
+        bird_ani.save(path, writer = "ffmpeg", fps = 20)
+    else:
+        for iT in range(Nt):
+            # Use obstacles step, not the base model.
+            x, y, vx, vy, theta = obs.step(x, y, vx, vy, theta, dt, L, A, O,
+                                lam_c, lam_a, lam_m, lam_o, lam_att, eta, v0, R, x_obs, y_obs, attractor_pos)
             
             q = update_quiver(q, x, y, vx, vy)
             clear_output(wait = True)
