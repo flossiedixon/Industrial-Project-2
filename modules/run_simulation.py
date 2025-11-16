@@ -67,6 +67,23 @@ def plot_simulation(model_params, strength_params, fig = None, ax = None, seed =
 
 # -----
 
+def add_obstacle(ax, x_obs, y_obs, O):
+    ''' 
+    Helper function to add a circle to the plots.
+    Input:
+        ax (plt axes): the figure axis.
+        centre (float): the centre of the obstacle.
+    '''
+
+    # Plot the obstacle and it's 'force-field' effect.
+    # The inner circle represents the obstacle, the outer circle the 'too close' zone.
+    inner_circle = plt.Circle((x_obs, y_obs), 0.25*O, color = 'orange', alpha = 0.8)
+    outer_circle = plt.Circle((x_obs, y_obs), O, color = 'orange', alpha = 0.1)
+    ax.add_patch(inner_circle); ax.add_patch(outer_circle)
+
+    return ax
+
+
 def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = None, ax = None, seed = 10, save = False):
     ''' 
     Runs a simulation depending on the parameters.
@@ -88,8 +105,11 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
     v0, eta, L, dt, Nt, N = model_params
     lam_c, lam_a, lam_m, A, R = strength_params 
 
-    # Obstacle parameters: lam_0, x_obs, y_obs, O (the radius).
-    lam_o, x_obs, y_obs, O = obstacle_params
+    # Want it to be a list (or NumPy array) of lists.
+    if not(all(isinstance(i, list) for i in obstacle_params)):
+        # If it's just a list, make it a list of lists.
+        print(f'Changing the input {obstacle_params} to be a list of lists.')
+        obstacle_params = np.array([obstacle_params])
 
     if (fig is None) or (ax is None):
         fig, ax = plt.subplots(figsize = (10, 10))
@@ -104,11 +124,11 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
 
-    # Plot the obstacle and it's 'force-field' effect.
-    main_circle = plt.Circle((x_obs, y_obs), 0.5*O, color = 'red', alpha = 1.0)
-    inner_circle = plt.Circle((x_obs, y_obs), 0.25*O, color = 'red', alpha = 0.3)
-    outer_circle = plt.Circle((x_obs, y_obs), O, color = 'red', alpha = 0.1)
-    ax.add_patch(main_circle);  ax.add_patch(inner_circle); ax.add_patch(outer_circle)
+    # See new helper function defined above.
+    for obstacle_param in obstacle_params:
+        # Strength, centre, centre, 'too close' radius.
+        lam_o, x_obs, y_obs, O = obstacle_param
+        add_obstacle(ax, x_obs, y_obs, O)
 
     # ADDED FOR saving the animation - needs a mutable (changeable) structure.
     state = [x, y, vx, vy, theta, q]
@@ -120,7 +140,7 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
             # the loop. Could make it a list/dict instead
             state[0], state[1], state[2], state[3], state[4] = obs.step(
                 state[0], state[1], state[2], state[3], state[4],
-                dt, L, A, O, lam_c, lam_a, lam_m, lam_o, eta, v0, R, x_obs, y_obs)
+                dt, L, A, lam_c, lam_a, lam_m, eta, v0, R, obstacle_params)
             
             update_quiver(q, state[0], state[1], state[2], state[3])
 
@@ -138,8 +158,8 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
     else:
         for iT in range(Nt):
             # Use obstacles step, not the base model.
-            x, y, vx, vy, theta = obs.step(x, y, vx, vy, theta, dt, L, A, O,
-                                lam_c, lam_a, lam_m, lam_o, eta, v0, R, x_obs, y_obs)
+            x, y, vx, vy, theta = obs.step(x, y, vx, vy, theta, dt, L, A, 
+                                lam_c, lam_a, lam_m, eta, v0, R, obstacle_params)
             
             q = update_quiver(q, x, y, vx, vy)
             clear_output(wait = True)
@@ -169,9 +189,6 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
     v0, eta, L, dt, Nt, N = model_params
     lam_c, lam_a, lam_m, lam_att, A, R = strength_params 
 
-    # Obstacle parameters: lam_0, x_obs, y_obs, O (the radius).
-    lam_o, x_obs, y_obs, O = obstacle_params
-
     if (fig is None) or (ax is None):
         fig, ax = plt.subplots(figsize = (10, 10))
 
@@ -185,11 +202,11 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
 
-    # Plot the obstacle and it's 'force-field' effect.
-    main_circle = plt.Circle((x_obs, y_obs), 0.5*O, color = 'red', alpha = 1.0)
-    inner_circle = plt.Circle((x_obs, y_obs), 0.25*O, color = 'red', alpha = 0.3)
-    outer_circle = plt.Circle((x_obs, y_obs), O, color = 'red', alpha = 0.1)
-    ax.add_patch(main_circle);  ax.add_patch(inner_circle); ax.add_patch(outer_circle)
+    # See new helper function defined above.
+    for obstacle_param in obstacle_params:
+        # Strength, centre, centre, 'too close' radius.
+        lam_o, x_obs, y_obs, O = obstacle_param
+        add_obstacle(ax, x_obs, y_obs, O)
 
     # ADDED FOR saving the animation - needs a mutable (changeable) structure.
     state = [x, y, vx, vy, theta, q]
@@ -199,9 +216,9 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
         def update(frame):
             # Same process as in loop, 'global' tells Python to use the variables outside
             # the loop. Could make it a list/dict instead
-            state[0], state[1], state[2], state[3], state[4] = obs.step(
+            state[0], state[1], state[2], state[3], state[4] = att.step(
                 state[0], state[1], state[2], state[3], state[4],
-                dt, L, A, O, lam_c, lam_a, lam_m, lam_o, eta, v0, R, x_obs, y_obs)
+                dt, L, A, lam_c, lam_a, lam_m, lam_att, eta, v0, R, obstacle_params, attractor_pos)
             
             update_quiver(q, state[0], state[1], state[2], state[3])
 
@@ -219,8 +236,8 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
     else:
         for iT in range(Nt):
             # Use obstacles step, not the base model.
-            x, y, vx, vy, theta = att.step(x, y, vx, vy, theta, dt, L, A, O,
-                                lam_c, lam_a, lam_m, lam_o, lam_att, eta, v0, R, x_obs, y_obs, attractor_pos)
+            x, y, vx, vy, theta = att.step(x, y, vx, vy, theta, dt, L, A, 
+                                    lam_c, lam_a, lam_m, lam_att, eta, v0, R, obstacle_params, attractor_pos)
             
             q = update_quiver(q, x, y, vx, vy)
             clear_output(wait = True)

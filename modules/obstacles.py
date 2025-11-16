@@ -4,17 +4,15 @@ import importlib
 from modules import base_model as bm
 importlib.reload(bm)
 
-def avoid_obstacle(lam_o, x, y, x_obs, y_obs, O):
+def avoid_obstacle(x, y, obstacle_params):
     ''' 
     Determines the avoid-obstacle velocity update,
     simialr to that of avoid_birds(); that is,
         lambda_o * (proportional distance to obstacle).
+    Iterated on each obstacle given.
 
     Input:
-        lam_o (float): the strength of the obstacle-avoidance update.
         x, y (ndarray): positions of all birds.
-        x_obs, y_obs (float): the position of the obstacle.
-        O (float): the radius to avoid the obstacle from.
     '''
 
     N = x.shape[0]
@@ -22,24 +20,30 @@ def avoid_obstacle(lam_o, x, y, x_obs, y_obs, O):
     vy_o = np.zeros((N, 1))
 
     for bird in range(N):
-        # Being too near means within the radius O of the obstacle.
-        euclid_dist = np.sqrt((x[bird] - x_obs)**2 + (y[bird] - y_obs)**2)
-        too_close = euclid_dist < O
+        for obstacle_param in obstacle_params:
+            lam_o, x_obs, y_obs, O = obstacle_param
+            
+            # Being too near means within the radius O of the obstacle.
+            euclid_dist = np.sqrt((x[bird] - x_obs)**2 + (y[bird] - y_obs)**2)
+            too_close = euclid_dist < O
 
-        if (too_close):
-            # The strength is inversely proportional to the distance?
-            # Don't divide by zero - add something small to denominator.
-            repulsion_strength = lam_o / (euclid_dist**2 + 1e-5)
-            vx_o[bird] = repulsion_strength * ((x[bird] - x_obs) / euclid_dist)
-            vy_o[bird] = repulsion_strength * ((y[bird] - y_obs) / euclid_dist)
+            if (too_close):
+                # The strength is inversely proportional to the distance?
+                # Don't divide by zero - add something small to denominator.
+                repulsion_strength = lam_o / (euclid_dist**2 + 1e-5)
+                vx_o[bird] = repulsion_strength * ((x[bird] - x_obs) / euclid_dist)
+                vy_o[bird] = repulsion_strength * ((y[bird] - y_obs) / euclid_dist)
+
+                # Break - this assumes each bird is only near ONE OBSTACLE at a time.
+                break
     
     # If they are not too close, this will be zero.
     return vx_o, vy_o
 
 # -----
 
-def step(x, y, vx, vy, theta, dt, L, A, O, lam_c, lam_a, lam_m, lam_o,
-          eta, v0, R, x_obs, y_obs):
+def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m,
+            eta, v0, R, obstacle_params):
     ''' 
     1. Update positions.
     2. Calculate cohesion/avoidance/matching velocities.
@@ -53,14 +57,11 @@ def step(x, y, vx, vy, theta, dt, L, A, O, lam_c, lam_a, lam_m, lam_o,
         dt (float): the timestep.
         L (float): the size of the box.
         A (float): the radius of bird avoidance.
-        O (float): the radius of obstacle avoidance.
         lam_c, lam_a, lam_m (float): the strength of each
             velocity update.
         eta (float): the strength of noise update.
         v0 (float): the initial speed of all birds.
         R (float): the radius of neighbours.
-        x_obs (float): the x-position of the obstacle.
-        y_obs (float): the y-position of the obstacle.
     Output:
         x, y (ndarray): the positions of the birds.
         vx, vy (ndarray): the velocities of the birds.
@@ -73,7 +74,8 @@ def step(x, y, vx, vy, theta, dt, L, A, O, lam_c, lam_a, lam_m, lam_o,
     vx_c, vy_c = bm.centre_of_mass(lam_c, x, y, R)
     vx_a, vy_a = bm.avoid_birds(lam_a, A, x, y)
     vx_m, vy_m = bm.match_birds(lam_m, x, y, vx, vy, theta, R)
-    vx_o, vy_o = avoid_obstacle(lam_o, x, y, x_obs, y_obs, O)
+
+    vx_o, vy_o = avoid_obstacle(x, y, obstacle_params)
 
     # Update velocities and angles.
     # REMOVED the update_v function - felt unnecessary.

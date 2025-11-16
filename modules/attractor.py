@@ -18,18 +18,19 @@ def global_attractor(lam_att, x, y, attractor_pos):
         x, y: x, y position
         attractor_pos [x, y] = point of attraction (point the birds are migrating towards). This does not have to be within the L*L grid
     '''
+
     N = x.shape[0]
     vx_att = np.zeros((N, 1))
     vy_att = np.zeros((N, 1))
     for bird in range(N):
-        vx_att[bird] = lam_att* (attractor_pos[0] - x[bird])
+        vx_att[bird] = lam_att * (attractor_pos[0] - x[bird])
         vy_att[bird] = lam_att * (attractor_pos[1] - y[bird])
 
     return vx_att, vy_att
 # -----
 
-def step(x, y, vx, vy, theta, dt, L, A, O, lam_c, lam_a, lam_m, lam_o, lam_att,
-          eta, v0, R, x_obs, y_obs, attractor_pos):
+def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m, lam_att,
+          eta, v0, R, obstacle_params, attractor_pos):
     ''' 
     1. Update positions.
     2. Calculate cohesion/avoidance/matching velocities.
@@ -64,10 +65,11 @@ def step(x, y, vx, vy, theta, dt, L, A, O, lam_c, lam_a, lam_m, lam_o, lam_att,
     vx_c, vy_c = bm.centre_of_mass(lam_c, x, y, R)
     vx_a, vy_a = bm.avoid_birds(lam_a, A, x, y)
     vx_m, vy_m = bm.match_birds(lam_m, x, y, vx, vy, theta, R)
-    vx_o, vy_o = obs.avoid_obstacle(lam_o, x, y, x_obs, y_obs, O)
     vx_att, vy_att = global_attractor(lam_att, x, y, attractor_pos)
-    # Update velocities and angles.
-    # REMOVED the update_v function - felt unnecessary.
+
+    vx_o, vy_o = obs.avoid_obstacle(x, y, obstacle_params)
+    
+
     u_vx = vx + vx_c + vx_a + vx_m + vx_o + vx_att
     u_vy = vy + vy_c + vy_a + vy_m + vy_o + vy_att
     theta = bm.update_theta(x, y, theta, eta, R**2)

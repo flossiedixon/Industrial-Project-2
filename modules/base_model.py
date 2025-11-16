@@ -1,12 +1,13 @@
 import numpy as np
 
-def initialize_birds(N, L, v0):
+def initialize_birds(N, L, v0, init_left = True):
     '''
     Set initial positions, direction, and velocities of birds.
     Input: 
         N (int): the number of birds.
         L (float): the size of the box.
         v0 (float): initial velocity of birds.
+        init_left (boolean): if True, all birds are initialised on the left-quarter plane.
     Output:
         x (ndarray): an Nx1 array of random starting x-positions
         y (ndarray): an Nx1 array of random starting y-positions
@@ -16,16 +17,13 @@ def initialize_birds(N, L, v0):
     '''
 
     # Bird positions - an N-dimensional ndarray.
-    #x = np.random.rand(N, 1)*2
-    #y = np.random.rand(N, 1)*2
-    #------------------------------------------------
-    #Could add input arguments, say x_range, y_range. List/array with a min and max values. Should obviously be within our grid L
-    #initial position of each bird will be min + a random value between min and max
-    x_range = [0, 4]
-    y_range = [0, 4]
-    x = x_range[0] + ( np.random.rand(N, 1) * (x_range[1] - x_range[0]) )
-    y = y_range[0] + ( np.random.rand(N, 1) * (y_range[1] - y_range[0]) )
-    #-------------------------------------------------------
+    # If init_left is true, set them to the left quarter-plane (L/4). Otherwise random in L.
+    x = np.random.rand(N, 1)*L
+    y = np.random.rand(N, 1)*L
+    
+    if (init_left):
+        x = x / (L/4)
+        y = y / (L/4)
 
     # Matching bird velocities, split into x and y components.
     theta = 2 * np.pi * np.random.rand(N, 1)
