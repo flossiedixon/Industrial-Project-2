@@ -168,7 +168,7 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
         plt.close(fig)
         return fig, ax
     
-def plot_simulation_att(model_params, strength_params, obstacle_params, attractor_pos, fig = None, ax = None, seed = 10, save = False):
+def plot_simulation_att(model_params, strength_params, obstacle_params, attractor_pos, init_left = True, fig = None, ax = None, seed = 10, save = False):
     ''' 
     Runs a simulation depending on the parameters.
     If a figure is provided, it plots it there. Otherwise it creates one.
@@ -193,7 +193,7 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
         fig, ax = plt.subplots(figsize = (10, 10))
 
     # Get the initial configuration
-    x, y, vx, vy, theta = bm.initialize_birds(N, L, v0)
+    x, y, vx, vy, theta = bm.initialize_birds(N, L, v0, init_left)
 
     # Do an initial plot and set up the axes.
     q = ax.quiver(x, y, vx, vy, scale = 50)

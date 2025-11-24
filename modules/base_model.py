@@ -23,7 +23,7 @@ def initialize_birds(N, L, v0, init_left = True):
     
     if (init_left):
         x = x / (L/4)
-        y = y / (L/4)
+        # y = y / (L/4)
 
     # Matching bird velocities, split into x and y components.
     theta = 2 * np.pi * np.random.rand(N, 1)
