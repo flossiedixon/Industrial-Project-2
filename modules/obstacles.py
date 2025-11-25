@@ -4,6 +4,8 @@ import importlib
 from modules import base_model as bm
 importlib.reload(bm)
 
+deflection_count = 0
+
 def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
     ''' 
     Determines the avoid-obstacle velocity update,
@@ -14,7 +16,7 @@ def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
     Input:
         x, y (ndarray): positions of all birds.
     '''
-
+    global deflection_count
     if obs_method not in ["forcefield", "steer2avoid"]:
         raise ValueError(f'Invalid obstacle avoidance method received: {obs_method}.')
 
@@ -31,6 +33,9 @@ def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
                 too_close = euclid_dist < O
 
                 if (too_close):
+                    #deflection count
+                    deflection_count += 1
+                    
                     # The strength is inversely proportional to the distance?
                     # Don't divide by zero - add something small to denominator.
                     repulsion_strength = lam_o / (euclid_dist**2 + 1e-2)
@@ -102,7 +107,13 @@ def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
     return vx_o, vy_o
 
 # -----
-
+def get_deflection_count():
+    """Get the current deflection count and reset it"""
+    global deflection_count
+    count = deflection_count
+    deflection_count = 0  # Reset for next simulation
+    return count
+# -----
 def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m,
             eta, v0, R, obstacle_params):
     ''' 
