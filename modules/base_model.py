@@ -159,6 +159,12 @@ def match_birds(lam_m, x, y, vx, vy, theta, R = 1.25):
     Output:
         vx_m, vy_m (ndarray): the velocity updates according to cohesion (matching velocities).
     '''
+    #Checking issues with my test code
+    # x = x.reshape(-1, 1)
+    # y = y.reshape(-1, 1)
+    # vx = vx.reshape(-1, 1)
+    # vy = vy.reshape(-1, 1)
+    # theta = theta.reshape(-1, 1)
 
     # Initialise empty arrays that will contain the update.
     N = x.shape[0]
