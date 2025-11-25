@@ -249,4 +249,33 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
         return fig, ax
 
 
+def count_obstacle_deflections(model_params, strength_params, obstacle_params, seed=10):
+    """
+    Run a simulation and count how many times birds are deflected by obstacles
+    
+    Returns:
+        total_deflections (int): Total number of obstacle deflections during simulation
+    """
+    np.random.seed(seed)
+
+    # Unpack the arguments
+    v0, eta, L, dt, Nt, N = model_params
+    lam_c, lam_a, lam_m, A, R = strength_params 
+
+    # Reset deflection counter
+    from modules.obstacles import get_deflection_count
+    get_deflection_count()  # This resets the counter to 0
+
+    # Get initial configuration
+    x, y, vx, vy, theta = bm.initialize_birds(N, L, v0)
+
+    # Run simulation
+    for iT in range(Nt):
+        x, y, vx, vy, theta = obs.step(x, y, vx, vy, theta, dt, L, A, 
+                            lam_c, lam_a, lam_m, eta, v0, R, obstacle_params)
+
+    # Get final deflection count
+    total_deflections = get_deflection_count()
+    return total_deflections
+
 
