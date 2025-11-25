@@ -67,7 +67,7 @@ def plot_simulation(model_params, strength_params, fig = None, ax = None, seed =
 
 # -----
 
-def add_obstacle(ax, x_obs, y_obs, O):
+def add_obstacle(ax, x_obs, y_obs, O, show_boundary = True):
     ''' 
     Helper function to add a circle to the plots.
     Input:
@@ -79,7 +79,10 @@ def add_obstacle(ax, x_obs, y_obs, O):
     # The inner circle represents the obstacle, the outer circle the 'too close' zone.
     inner_circle = plt.Circle((x_obs, y_obs), 0.25*O, color = 'orange', alpha = 0.8)
     outer_circle = plt.Circle((x_obs, y_obs), O, color = 'orange', alpha = 0.1)
-    ax.add_patch(inner_circle); ax.add_patch(outer_circle)
+    ax.add_patch(inner_circle)
+    
+    if (show_boundary):
+        ax.add_patch(outer_circle)
 
     return ax
 
@@ -190,6 +193,9 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
     v0, eta, L, dt, Nt, N = model_params
     lam_c, lam_a, lam_m, lam_att, A, R = strength_params 
 
+    # Lighter obstacle outer circle - don't show if S2A.
+    show_boundary = True if obs_method == "forcefield" else False
+
     if (fig is None) or (ax is None):
         fig, ax = plt.subplots(figsize = (10, 10))
 
@@ -207,7 +213,7 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
     for obstacle_param in obstacle_params:
         # Strength, centre, centre, 'too close' radius.
         lam_o, x_obs, y_obs, O = obstacle_param
-        add_obstacle(ax, x_obs, y_obs, O)
+        add_obstacle(ax, x_obs, y_obs, O, show_boundary)
 
     # ADDED FOR saving the animation - needs a mutable (changeable) structure.
     state = [x, y, vx, vy, theta, q]
