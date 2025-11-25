@@ -168,7 +168,8 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
         plt.close(fig)
         return fig, ax
     
-def plot_simulation_att(model_params, strength_params, obstacle_params, attractor_pos, init_left = True, fig = None, ax = None, seed = 10, save = False):
+def plot_simulation_att(model_params, strength_params, obstacle_params, attractor_pos, 
+                        init_left = True, obs_method = "forcefield", fig = None, ax = None, seed = 10, save = False):
     ''' 
     Runs a simulation depending on the parameters.
     If a figure is provided, it plots it there. Otherwise it creates one.
@@ -218,7 +219,7 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
             # the loop. Could make it a list/dict instead
             state[0], state[1], state[2], state[3], state[4] = att.step(
                 state[0], state[1], state[2], state[3], state[4],
-                dt, L, A, lam_c, lam_a, lam_m, lam_att, eta, v0, R, obstacle_params, attractor_pos)
+                dt, L, A, lam_c, lam_a, lam_m, lam_att, eta, v0, R, obstacle_params, obs_method, attractor_pos)
             
             update_quiver(q, state[0], state[1], state[2], state[3])
 
@@ -237,7 +238,8 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
         for iT in range(Nt):
             # Use obstacles step, not the base model.
             x, y, vx, vy, theta = att.step(x, y, vx, vy, theta, dt, L, A, 
-                                    lam_c, lam_a, lam_m, lam_att, eta, v0, R, obstacle_params, attractor_pos)
+                                    lam_c, lam_a, lam_m, lam_att, eta, v0, R, 
+                                    obstacle_params, obs_method, attractor_pos)
             
             q = update_quiver(q, x, y, vx, vy)
             clear_output(wait = True)

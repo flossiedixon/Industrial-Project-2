@@ -4,7 +4,7 @@ import importlib
 from modules import base_model as bm
 importlib.reload(bm)
 
-def avoid_obstacle(x, y, obstacle_params):
+def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
     ''' 
     Determines the avoid-obstacle velocity update,
     simialr to that of avoid_birds(); that is,
@@ -15,28 +15,89 @@ def avoid_obstacle(x, y, obstacle_params):
         x, y (ndarray): positions of all birds.
     '''
 
+    if obs_method not in ["forcefield", "steer2avoid"]:
+        raise ValueError(f'Invalid obstacle avoidance method received: {obs_method}.')
+
     N = x.shape[0]
     vx_o = np.zeros((N, 1))
     vy_o = np.zeros((N, 1))
 
-    for bird in range(N):
-        for obstacle_param in obstacle_params:
-            lam_o, x_obs, y_obs, O = obstacle_param
+    if (obs_method == "forcefield"):
+        for bird in range(N):
+            for obstacle_param in obstacle_params:
+                lam_o, x_obs, y_obs, O = obstacle_param
+                # Being too near means within the radius O of the obstacle.
+                euclid_dist = np.sqrt((x[bird] - x_obs)**2 + (y[bird] - y_obs)**2)
+                too_close = euclid_dist < O
+
+                if (too_close):
+                    # The strength is inversely proportional to the distance?
+                    # Don't divide by zero - add something small to denominator.
+                    repulsion_strength = lam_o / (euclid_dist**2 + 1e-2)
+                    vx_o[bird] = repulsion_strength * ((x[bird] - x_obs) / euclid_dist)
+                    vy_o[bird] = repulsion_strength * ((y[bird] - y_obs) / euclid_dist)
+
+                    # Break - this assumes each bird is only near ONE OBSTACLE at a time.
+                    break
             
-            # Being too near means within the radius O of the obstacle.
-            euclid_dist = np.sqrt((x[bird] - x_obs)**2 + (y[bird] - y_obs)**2)
-            too_close = euclid_dist < O
+    # Steer to avoid in else block.
+    elif (obs_method == "steer2avoid"):
+        for bird in range(N):
+            # Check each predicted trajectory against all obstacles. 
+            # If a trajectory hits an obstacle, move on to the next bird.
+            cur_x, cur_y = x[bird], y[bird]
+            cur_vx, cur_vy = vx[bird], vy[bird]
 
-            if (too_close):
-                # The strength is inversely proportional to the distance?
-                # Don't divide by zero - add something small to denominator.
-                repulsion_strength = lam_o / (euclid_dist**2 + 1e-5)
-                vx_o[bird] = repulsion_strength * ((x[bird] - x_obs) / euclid_dist)
-                vy_o[bird] = repulsion_strength * ((y[bird] - y_obs) / euclid_dist)
+            if (np.isnan(cur_vx) or np.isnan(cur_vy)):
+                continue
 
-                # Break - this assumes each bird is only near ONE OBSTACLE at a time.
-                break
-    
+            # Restrict the range of alphas so that the predicted trajectories do not
+            # go more than L/2 away of the bird. In this sense L/2 is the "eyesight range".
+            alpha_max = (L/2) / (np.sqrt(cur_vx**2 + cur_vy**2) + 1e-2)
+            
+            # Arbitrary maximum for now.
+            alpha_max = min(alpha_max, L)
+
+            # print(f'The alpha max is {alpha_max}.')
+            alpha_step = (L/2) / 100
+            alphas = np.arange(1, np.abs(alpha_max), alpha_step)
+
+            # Trajectories = alpha(vx + vy) for each alpha.
+            trajec_x = cur_x + alphas * cur_vx
+            trajec_y = cur_y + alphas * cur_vy
+
+            # trajec_x = [cur_x + alpha*cur_vx for alpha in alphas]
+            # trajec_y = [cur_y + alpha*cur_vy for alpha in alphas]
+
+            for i, (pred_x, pred_y) in enumerate(zip(trajec_x, trajec_y)):
+                will_collide = False
+
+                for obstacle_param in obstacle_params:
+                    lam_o, x_obs, y_obs, O = obstacle_param
+
+                    # Being too near means PREDICTED TRAJEC iswithin the radius O of the obstacle.
+                    euclid_dist = np.sqrt((pred_x - x_obs)**2 + (pred_y - y_obs)**2)
+                    too_close = euclid_dist < O
+
+                    if (too_close):
+                        will_collide = True 
+                        alpha = alphas[i]
+
+                        # Originally the same as the force-field, but then divide by alpha
+                        # so the further away you are, the less you change.
+                        repulsion_strength = lam_o / (euclid_dist**2 + 1e-5)
+                        repulsion_strength *= (1 / alpha)
+
+                        vx_o[bird] = repulsion_strength * ((pred_x - x_obs) / euclid_dist + 1e-2)
+                        vy_o[bird] = repulsion_strength * ((pred_y - y_obs) / euclid_dist + 1e-2)
+
+                        # Don't check any other obstacles
+                        break
+
+                if (will_collide):
+                    # Don't check any other trajectories - move on to the next bird.
+                    break 
+
     # If they are not too close, this will be zero.
     return vx_o, vy_o
 

@@ -30,7 +30,7 @@ def global_attractor(lam_att, x, y, attractor_pos):
 # -----
 
 def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m, lam_att,
-          eta, v0, R, obstacle_params, attractor_pos):
+          eta, v0, R, obstacle_params, obs_method, attractor_pos):
     ''' 
     1. Update positions.
     2. Calculate cohesion/avoidance/matching velocities.
@@ -67,7 +67,7 @@ def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m, lam_att,
     vx_m, vy_m = bm.match_birds(lam_m, x, y, vx, vy, theta, R)
     vx_att, vy_att = global_attractor(lam_att, x, y, attractor_pos)
 
-    vx_o, vy_o = obs.avoid_obstacle(x, y, obstacle_params)
+    vx_o, vy_o = obs.avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method)
     
 
     u_vx = vx + vx_c + vx_a + vx_m + vx_o + vx_att
