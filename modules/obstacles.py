@@ -1,3 +1,14 @@
+import sys
+import os
+
+# Get the path of the current file's directory (modules/)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Add the parent directory (Industrial-Project-2/) to the system path
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+
 import numpy as np
 import importlib 
 
@@ -147,7 +158,7 @@ def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m,
     vx_a, vy_a = bm.avoid_birds(lam_a, A, x, y)
     vx_m, vy_m = bm.match_birds(lam_m, x, y, vx, vy, theta, R)
 
-    vx_o, vy_o = avoid_obstacle(x, y, obstacle_params)
+    vx_o, vy_o = avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "steer2avoid")
 
     # Update velocities and angles.
     # REMOVED the update_v function - felt unnecessary.
