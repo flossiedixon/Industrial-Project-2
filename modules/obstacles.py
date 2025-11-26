@@ -64,7 +64,7 @@ def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
             alpha_max = min(alpha_max, L)
 
             # print(f'The alpha max is {alpha_max}.')
-            alpha_step = (L/2) / 100
+            alpha_step = L / 20
             alphas = np.arange(1, np.abs(alpha_max), alpha_step)
 
             # Trajectories = alpha(vx + vy) for each alpha.

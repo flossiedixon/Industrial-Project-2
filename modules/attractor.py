@@ -1,3 +1,13 @@
+import sys
+import os
+
+# Get the path of the current file's directory (modules/)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Add the parent directory (Industrial-Project-2/) to the system path
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 import numpy as np
 import importlib 
 
@@ -23,8 +33,8 @@ def global_attractor(lam_att, x, y, attractor_pos):
     vx_att = np.zeros((N, 1))
     vy_att = np.zeros((N, 1))
     for bird in range(N):
-        vx_att[bird] = lam_att * (attractor_pos[0] - x[bird])
-        vy_att[bird] = lam_att * (attractor_pos[1] - y[bird])
+        vx_att[bird] = lam_att * (attractor_pos[0] - x[bird]) * 2
+        vy_att[bird] = lam_att * (attractor_pos[1] - y[bird]) * 2
 
     return vx_att, vy_att
 # -----
@@ -70,8 +80,8 @@ def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m, lam_att,
     vx_o, vy_o = obs.avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method)
     
 
-    u_vx = vx + vx_c + vx_a + vx_m + vx_o + vx_att
-    u_vy = vy + vy_c + vy_a + vy_m + vy_o + vy_att
+    u_vx = vx +  vx_c + vx_a + vx_att + vx_m + vx_o
+    u_vy = vy  + vy_c + vy_a + vy_att + vy_m + vy_o
     theta = bm.update_theta(x, y, theta, eta, R**2)
 
     # Limit speeds.
