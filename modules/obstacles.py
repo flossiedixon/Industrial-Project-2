@@ -114,6 +114,7 @@ def get_deflection_count():
     deflection_count = 0  # Reset for next simulation
     return count
 # -----
+
 def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m,
             eta, v0, R, obstacle_params):
     ''' 
@@ -154,6 +155,23 @@ def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m,
     u_vx = vx + vx_c + vx_a + vx_m + vx_o
     u_vy = vy + vy_c + vy_a + vy_m + vy_o
     theta = bm.update_theta(x, y, theta, eta, R**2)
+
+    # Find the angles of the previous and current velocities 
+    # Find the change in angle, done from -pi to pi
+    # Find the elementwise speed
+    # Limit the change in angle 
+    # Compute the new velocity with limited angle change 
+    old_theta = np.arctan2( vy, vx)
+    updated_theta = np.arctan2( u_vy, u_vx)
+    change_theta = ((((updated_theta - old_theta)+np.pi)%2*np.pi) - np.pi)
+    
+    new_speed = np.sqrt ( u_vy**2 + u_vx**2)
+
+    limited_change = old_theta + np.clip (change_theta, -1/8*np.pi, 1/8*np.pi)
+
+    u_vx = new_speed * np.cos(limited_change)
+    u_vy = new_speed * np.sin(limited_change)
+    
 
     # Limit speeds.
     vx_max, vy_max = bm.max_velocity(v0)
