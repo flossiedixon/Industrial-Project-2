@@ -8,9 +8,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-
 import numpy as np
 import importlib 
+import matplotlib.pyplot as plt
 
 from modules import base_model as bm
 importlib.reload(bm)
@@ -44,7 +44,7 @@ def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
                 too_close = euclid_dist < O
 
                 if (too_close):
-                    #deflection count
+                    # Deflection count
                     deflection_count += 1
                     
                     # The strength is inversely proportional to the distance?
@@ -66,6 +66,17 @@ def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
 
             if (np.isnan(cur_vx) or np.isnan(cur_vy)):
                 continue
+
+            # Check the current positions - if too close to an obstacle, update deflection count.
+            for obstacle_param in obstacle_params:
+                lam_o, x_obs, y_obs, O = obstacle_param
+                # Being too near means within the radius O of the obstacle.
+                euclid_dist = np.sqrt((cur_x - x_obs)**2 + (cur_y - y_obs)**2)
+                too_close = euclid_dist < O
+
+                if (too_close):
+                    # Deflection count
+                    deflection_count += 1
 
             # Restrict the range of alphas so that the predicted trajectories do not
             # go more than L/2 away of the bird. In this sense L/2 is the "eyesight range".
@@ -118,15 +129,50 @@ def avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method = "forcefield"):
     return vx_o, vy_o
 
 # -----
+
+def add_obstacle(ax, x_obs, y_obs, O, show_boundary = True):
+    ''' 
+    Helper function to add a circle to the plots.
+    Input:
+        ax (plt axes): the figure axis.
+        centre (float): the centre of the obstacle.
+    '''
+
+    # Plot the obstacle and it's 'force-field' effect.
+    # The inner circle represents the obstacle, the outer circle the 'too close' zone.
+    inner_circle = plt.Circle((x_obs, y_obs), 0.25*O, color = 'orange', alpha = 0.8)
+    outer_circle = plt.Circle((x_obs, y_obs), O, color = 'orange', alpha = 0.1)
+    ax.add_patch(inner_circle)
+    
+    if (show_boundary):
+        ax.add_patch(outer_circle)
+
+    return ax
+
+# -----
+
 def get_deflection_count():
-    """Get the current deflection count and reset it"""
+    """
+    Get the current deflection count and reset it for the next iteration.
+    """
+
     global deflection_count
     count = deflection_count
     deflection_count = 0  # Reset for next simulation
     return count
-# -----
 
-def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m,
+
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+
+# Should not be using this function any more.
+
+def OLD_step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m,
             eta, v0, R, obstacle_params):
     ''' 
     1. Update positions.

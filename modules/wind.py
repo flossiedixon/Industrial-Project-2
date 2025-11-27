@@ -1,36 +1,42 @@
 import numpy as np
-import importlib 
 
-from modules import base_model as bm
-importlib.reload(bm)
-from modules import obstacles as obs
-importlib.reload(obs)
+def add_wind(x, wind_params):
+    ''' 
+    Adds wind to the system.
+    Two types: drift and directional.
+        Drift: a constant force irrespective of current velocities.
+        Directional: wind strength is proportional to velocities.
 
-def update_v(vx, vy, vx_c, vy_c, vx_a, vy_a, vx_m, vy_m):
-    '''
-    Update the velocities according to
-        velocity += centre of mass (com), avoidance, matching;
-        Then introduce the impact of wind on the velocity.
     Input:
-        vx, vy (ndarray): the x and y velocities.
-        vx_c, vy_c (ndarray): the x y and com velocities.
-        vx_a, vy_a (ndarray): the x and y avoidance velocities.
-        vx_m, vy_m (ndarray): the x and y matching velocities.
+        x (ndarray): the bird x-positions. (NB only used to get N).
+        wind_params (ndarray or list): the wind parameters:
+            - drift_wind (bool): if there is wind drift or not
+            - w_xv (float): wind drift in x component
+            - w_vy (float): wind drift in y component
 
-    Output: 
-        u_vx, u_vy (ndarray): the updated velocities.
+            - dir_wind (bool): if there is directional wind or not.
+            - wind_theta (float): the angle of wind.
+            - lam_w (float): the wind strength.
+    Output:
+        vx_w (ndarray): the wind velocity contribution in x.
+        vy_w (ndarray): the wind velocity contribution in y.
     '''
 
-    u_vx = vx + vx_c + vx_a + vx_m
-    u_vy = vy + vy_c + vy_a + vy_m
+    # Drift wind (bool) and wind drift velocities,
+    # then directional wind (bool) and wind theta/strength.
+    drift_wind, w_vx, w_vy, dir_wind, wind_theta, lam_w = wind_params  
 
-    # 1. Wind drift
-    if drift_wind:
-        u_vx += wind_vx
-        u_vy += wind_vy
+    # Initialise empty arrays that will contain the update.
+    N = x.shape[0]
+    vx_w = np.zeros((N, 1))
+    vy_w = np.zeros((N, 1))
 
-    # 2. Directional wind bias
-    if direction_wind:
-        u_vx += wind_strength * np.cos(wind_theta)
-        u_vy += wind_strength * np.sin(wind_theta)
-    return u_vx, u_vy
+    if (drift_wind):
+        vx_w += w_vx
+        vy_w += w_vy
+
+    if (dir_wind):
+        vx_w += lam_w * np.cos(wind_theta)
+        vy_w += lam_w * np.cos(wind_theta)
+
+    return vx_w, vy_w

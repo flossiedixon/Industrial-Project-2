@@ -11,14 +11,33 @@ importlib.reload(bm)
 importlib.reload(obs)
 importlib.reload(att)
 
-def update_quiver(q, x, y, vx, vy):
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+
+# YOU SHOULD NOT BE USING THIS FILE ANYMORE
+# Copy any extra functions (i.e. count deflections) into another file.
+
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+########################################################################
+
+
+def OLD_update_quiver(q, x, y, vx, vy):
     # Updates the arrows on the plot.
     q.set_offsets(np.column_stack([x,y]))
     q.set_UVC(vx,vy)
     
     return q
 
-def plot_simulation(model_params, strength_params, fig = None, ax = None, seed = 10):
+def OLD_plot_simulation(model_params, strength_params, fig = None, ax = None, seed = 10):
     ''' 
     Runs a simulation depending on the parameters.
     If a figure is provided, it plots it there. Otherwise it creates one.
@@ -67,7 +86,7 @@ def plot_simulation(model_params, strength_params, fig = None, ax = None, seed =
 
 # -----
 
-def add_obstacle(ax, x_obs, y_obs, O, show_boundary = True):
+def OLD_add_obstacle(ax, x_obs, y_obs, O, show_boundary = True):
     ''' 
     Helper function to add a circle to the plots.
     Input:
@@ -87,7 +106,7 @@ def add_obstacle(ax, x_obs, y_obs, O, show_boundary = True):
     return ax
 
 
-def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = None, ax = None, seed = 10, save = False):
+def OLD_plot_simulation_obs(model_params, strength_params, obstacle_params, fig = None, ax = None, seed = 10, save = False):
     ''' 
     Runs a simulation depending on the parameters.
     If a figure is provided, it plots it there. Otherwise it creates one.
@@ -171,7 +190,7 @@ def plot_simulation_obs(model_params, strength_params, obstacle_params, fig = No
         plt.close(fig)
         return fig, ax
     
-def plot_simulation_att(model_params, strength_params, obstacle_params, attractor_pos, 
+def OLD_plot_simulation_att(model_params, strength_params, obstacle_params, attractor_pos, 
                         init_left = True, obs_method = "forcefield", fig = None, ax = None, seed = 10, save = False):
     ''' 
     Runs a simulation depending on the parameters.
@@ -254,8 +273,16 @@ def plot_simulation_att(model_params, strength_params, obstacle_params, attracto
         plt.close(fig)
         return fig, ax
 
+########################################################################
+########################################################################
+########################################################################
 
-def count_obstacle_deflections(model_params, strength_params, obstacle_params, seed=10):
+# Copy this into another file - maybe into obstacles.py? Or freds.py? 
+# (Or whatever that's going to be called).
+
+# I have put it into freds.py for now.
+
+def count_obstacle_deflections(model_params, strength_params, obstacle_params, seed = 10):
     """
     Run a simulation and count how many times birds are deflected by obstacles
     
