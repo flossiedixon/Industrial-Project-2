@@ -7,12 +7,10 @@ import matplotlib.pyplot as plt
 from modules import base_model as bm
 from modules import obstacles as obs
 from modules import attractor as att
-from modules import run_simulation as run_sim
 from modules import wind as wind
 
 importlib.reload(obs); importlib.reload(bm); 
 importlib.reload(att); importlib.reload(wind); 
-importlib.reload(run_sim);
 
 # 
 
@@ -82,6 +80,25 @@ def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m, lam_att,
     u_vx = vx + vx_c + vx_a + vx_att + vx_m + vx_o + vx_w
     u_vy = vy + vy_c + vy_a + vy_att + vy_m + vy_o + vy_w
     theta = bm.update_theta(x, y, theta, eta, R**2)
+
+    # NEW - maximum theta update (@Flossie).
+    """ 
+    I have removed for now because it was giving weird results.
+    Need to talk 2 Flossie.
+
+    old_theta = np.arctan2(vy, vx)
+    updated_theta = np.arctan2(u_vy, u_vx)
+    change_theta = ((((updated_theta - old_theta) + np.pi) % 2 * np.pi) - np.pi)
+    
+    # Assuming maximum angle change is pi/8?
+    new_speed = np.sqrt(u_vy**2 + u_vx**2)
+    limited_change = old_theta + np.clip(change_theta, -1/8*np.pi, 1/8*np.pi)
+
+    u_vx = new_speed * np.cos(limited_change)
+    u_vy = new_speed * np.sin(limited_change)
+
+    # End of new. ============
+    """
 
     # Limit speeds.
     vx_max, vy_max = bm.max_velocity(v0)
