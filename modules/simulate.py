@@ -228,7 +228,7 @@ def plot_simulation(model_params, strength_params, obstacle_params, wind_params,
 # DM if questions! Docstring in step() should explain all the parameters. 
 
 def count_obstacle_deflections(model_params, strength_params, obstacle_params, wind_params, attractor_pos, 
-                        init_left = True, obs_method = "forcefield" seed = 10):
+                        init_left = True, obs_method = "forcefield", seed = 10):
     """
     Run a simulation and count how many times birds are deflected by obstacles
     
