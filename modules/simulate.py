@@ -84,7 +84,7 @@ def step(x, y, vx, vy, theta, dt, L, A, lam_c, lam_a, lam_m, lam_att,
     vx_o, vy_o = obs.avoid_obstacle(x, y, vx, vy, L, obstacle_params, obs_method)
 
     # NEW - Add wind.
-    vx_w, vy_w = wind.add_wind(x, wind_params)
+    vx_w, vy_w = wind.add_wind(vx, vy, wind_params)
 
     # Update velocities and theta.
     u_vx = vx + vx_c + vx_a + vx_att + vx_m + vx_o + vx_w
@@ -170,7 +170,8 @@ def plot_simulation(model_params, strength_params, obstacle_params, wind_params,
 
     # Do an initial plot and set up the axes.
     # *** If changing L you should think about changing the scale.
-    q = ax.quiver(x, y, vx, vy, scale = 50)
+    #scale chnaged so that we have consistent scaling across various grid sizes L
+    q = ax.quiver(x, y, vx, vy, scale = L*5)
     ax.set(xlim = (0, L), ylim = (0, L))
     ax.set_aspect('equal')
     ax.get_xaxis().set_visible(False)

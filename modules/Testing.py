@@ -58,7 +58,8 @@ def simulation_test(model_params, strength_params, obstacle_params, obs_method, 
 
     # if (fig is None) or (ax is None):
     #     fig, ax = plt.subplots(figsize = (10, 10))
-
+    from modules.obstacles import get_deflection_count
+    get_deflection_count()
     # Get the initial configuration
     x, y, vx, vy, theta = bm.initialize_birds(N, L, v0)
 
@@ -115,10 +116,10 @@ def simulation_test(model_params, strength_params, obstacle_params, obs_method, 
         #This may not be neccessary and code will break given x = 0, but just incase
         else:
             break
-        
+    total_deflections = get_deflection_count()
     #Reset random state to before simulation so subsequent simulations are unaffected
     np.random.set_state(rng_state)
-    return time_steps_taken, boids_finished, total_boids
+    return time_steps_taken, boids_finished, total_boids, total_deflections
 
 def mean_steps(model_params, strength_params, config, obs_method, attractor_pos, wind_params, goal, iters, seed = None, init_left = True):
     '''
@@ -132,7 +133,7 @@ def mean_steps(model_params, strength_params, config, obs_method, attractor_pos,
     v0, eta, L, dt, Nt, N = model_params #Take number of birds for calculating rate
     for i in range(iters):
         #run the simulation at each iteration
-        a, b, c = simulation_test(model_params, strength_params, config, obs_method, attractor_pos, wind_params, goal, seed)
+        a, b, c, d = simulation_test(model_params, strength_params, config, obs_method, attractor_pos, wind_params, goal, seed)
         #add results to counters
         time += a
         #print(time) 
@@ -140,15 +141,16 @@ def mean_steps(model_params, strength_params, config, obs_method, attractor_pos,
         #print(birds)
         #--------------------------
         #add Cathals code here Ideally
-        deflections = sim.count_obstacle_deflections(model_params, strength_params, config, wind_params, attractor_pos, 
-                        init_left, obs_method, seed = i)
-        total_deflections += deflections
+        #deflections = sim.count_obstacle_deflections(model_params, strength_params, config, wind_params, attractor_pos, 
+        #                init_left, obs_method, seed = i)
+        total_deflections += d
         #print(total_deflections)
     average_time = time / iters #Simple average function
     average_birds = birds / iters #Calculate the average birds finished
-    success_rate = average_birds / N *100 #Calculate this as a percentage (success rate)
+    success_rate = average_birds / N *100
+    average_deflections = total_deflections / iters #Calculate this as a percentage (success rate)
     #print(f'Average Time Taken: {average_time}, Bird success Rate: {success_rate}%, Total birds: {c}, for {N} iterations')
-    return average_time, success_rate, total_deflections
+    return average_time, success_rate, average_deflections
 
 def mean_times(model_params, strength_params, configs, obs_method, attractor_pos, wind_params, goal, iters, key, seed = None):
     '''
@@ -159,9 +161,9 @@ def mean_times(model_params, strength_params, configs, obs_method, attractor_pos
     
     #Some nice code found for formatting nice tables
     #<20 is left alignment with a width of 20 for example. It a string in this case and any remaining space is filled with spaces to 20 characters
-    print(f'| {"Configuration":<20} | {"Average Time":<15} | {"Success Rate":<15} | {"Deflections":<15} |')
+    print(f'| {"Configuration":<20} | {"Average Time":<15} | {"Success Rate":<15} | {"Average Deflections":<20} |')
     #Below this we print a number of dashes corresponding the the characters above to split the headers
-    print(f'| {"-"*20} | {"-"*15} | {"-"*15} | {"-"*15} |')
+    print(f'| {"-"*20} | {"-"*15} | {"-"*15} | {"-"*20} |')
 
     #enumerate the configurations
     for i, config in enumerate(configs):
@@ -169,5 +171,5 @@ def mean_times(model_params, strength_params, configs, obs_method, attractor_pos
         average_time, success_rate , deflections = mean_steps(model_params, strength_params, config, obs_method, attractor_pos, wind_params, goal, iters, seed)
 
         #Here we will apply the same left alignment as above. .2 is decimal points to show. Round to two is reasonable
-        print(f'| {name:<20} | {average_time:<15.2f} | {success_rate:<15.2f} | {deflections:<15} |')
+        print(f'| {name:<20} | {average_time:<15.2f} | {success_rate:<15.2f} | {deflections:<20.2f} |')
 

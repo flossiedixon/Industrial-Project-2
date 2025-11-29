@@ -1,6 +1,6 @@
 import numpy as np
 
-def add_wind(x, wind_params):
+def add_wind(vx, vy, wind_params):
     ''' 
     Adds wind to the system.
     Two types: drift and directional.
@@ -27,7 +27,7 @@ def add_wind(x, wind_params):
     drift_wind, w_vx, w_vy, dir_wind, wind_theta, lam_w = wind_params  
 
     # Initialise empty arrays that will contain the update.
-    N = x.shape[0]
+    N = vx.shape[0]
     vx_w = np.zeros((N, 1))
     vy_w = np.zeros((N, 1))
 
@@ -36,7 +36,7 @@ def add_wind(x, wind_params):
         vy_w += w_vy
 
     if (dir_wind):
-        vx_w += lam_w * np.cos(wind_theta)
-        vy_w += lam_w * np.cos(wind_theta)
+        vx_w += lam_w * vx * np.cos(wind_theta)
+        vy_w += lam_w * vy * np.cos(wind_theta)
 
     return vx_w, vy_w

@@ -224,7 +224,7 @@ def max_velocity(v0):
     Currently trivial - could be a function of lambda.
     '''
 
-    vx_max, vy_max = 2*v0, 2*v0
+    vx_max, vy_max = 3.5*v0, 3.5*v0
     return vx_max, vy_max
 
 # -----
