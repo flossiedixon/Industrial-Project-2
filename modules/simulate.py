@@ -4,6 +4,16 @@ from IPython.display import display, clear_output
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 
+import sys
+import os
+
+# Get the path of the current file's directory (modules/)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Add the parent directory (Industrial-Project-2/) to the system path
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 from modules import base_model as bm
 from modules import obstacles as obs
 from modules import attractor as att
@@ -239,7 +249,7 @@ def count_obstacle_deflections(model_params, strength_params, obstacle_params, w
 
     # Unpack the arguments
     v0, eta, L, dt, Nt, N = model_params
-    lam_c, lam_a, lam_m, A, R = strength_params 
+    lam_c, lam_a, lam_m, lam_att, A, R = strength_params 
 
     # Reset deflection counter
     from modules.obstacles import get_deflection_count
@@ -251,7 +261,8 @@ def count_obstacle_deflections(model_params, strength_params, obstacle_params, w
     # Run simulation
     for iT in range(Nt):
         x, y, vx, vy, theta = step(x, y, vx, vy, theta, dt, L, A, 
-                            lam_c, lam_a, lam_m, eta, v0, R, obstacle_params)
+                                    lam_c, lam_a, lam_m, lam_att, eta, v0, R, 
+                                    obstacle_params, obs_method, attractor_pos, wind_params)
 
     # Get final deflection count
     total_deflections = get_deflection_count()

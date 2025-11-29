@@ -23,18 +23,18 @@ import importlib
 from modules import base_model as bm 
 from modules import obstacles as obs
 from modules import attractor as att
-from modules import run_simulation as rs
+from modules import simulate as sim
 importlib.reload(bm)
 importlib.reload(obs)
 importlib.reload(att)
-importlib.reload(rs)
+importlib.reload(sim)
 
 def check_boundary(x, goal):
     return x >= goal
 
 
 
-def simulation_test(model_params, strength_params, obstacle_params, obs_method, attractor_pos, goal: float, seed = 10 ):
+def simulation_test(model_params, strength_params, obstacle_params, obs_method, attractor_pos, wind_params, goal: float, seed = 10 ):
 
     ''' 
     Runs a simulation depending on the parameters.
@@ -110,8 +110,8 @@ def simulation_test(model_params, strength_params, obstacle_params, obs_method, 
         # if there is remaining birds apply step function an dgenerate new step for birds. Then repeat masking/crossing process
         if len(x) > 0:
             # Use step, not the base model.
-            x, y, vx, vy, theta = att.step(x, y, vx, vy, theta, dt, L, A, 
-                lam_c, lam_a, lam_m, lam_att, eta, v0, R, obstacle_params, obs_method, attractor_pos)
+            x, y, vx, vy, theta = sim.step(x, y, vx, vy, theta, dt, L, A, 
+                lam_c, lam_a, lam_m, lam_att, eta, v0, R, obstacle_params, obs_method, attractor_pos, wind_params)
         #This may not be neccessary and code will break given x = 0, but just incase
         else:
             break
@@ -120,7 +120,7 @@ def simulation_test(model_params, strength_params, obstacle_params, obs_method, 
     np.random.set_state(rng_state)
     return time_steps_taken, boids_finished, total_boids
 
-def mean_steps(model_params, strength_params, config, obs_method, attractor_pos, goal, iters, seed = None):
+def mean_steps(model_params, strength_params, config, obs_method, attractor_pos, wind_params, goal, iters, seed = None, init_left = True):
     '''
     Take similar inputs to a normal individual simulation
     We will calculate the mean number of steps to completion
@@ -128,20 +128,29 @@ def mean_steps(model_params, strength_params, config, obs_method, attractor_pos,
     '''
     time = 0 #sum and divide by N. Obviously for a seed this will 
     birds = 0 #We'll get the average. I don't expect it to not be = to N (birds)
+    total_deflections = 0
     v0, eta, L, dt, Nt, N = model_params #Take number of birds for calculating rate
     for i in range(iters):
         #run the simulation at each iteration
-        a, b, c = simulation_test(model_params, strength_params, config, obs_method, attractor_pos, goal, seed)
+        a, b, c = simulation_test(model_params, strength_params, config, obs_method, attractor_pos, wind_params, goal, seed)
         #add results to counters
-        time += a 
+        time += a
+        #print(time) 
         birds += b
+        #print(birds)
+        #--------------------------
+        #add Cathals code here Ideally
+        deflections = sim.count_obstacle_deflections(model_params, strength_params, config, wind_params, attractor_pos, 
+                        init_left, obs_method, seed = i)
+        total_deflections += deflections
+        #print(total_deflections)
     average_time = time / iters #Simple average function
     average_birds = birds / iters #Calculate the average birds finished
     success_rate = average_birds / N *100 #Calculate this as a percentage (success rate)
     #print(f'Average Time Taken: {average_time}, Bird success Rate: {success_rate}%, Total birds: {c}, for {N} iterations')
-    return average_time, success_rate
+    return average_time, success_rate, total_deflections
 
-def mean_times(model_params, strength_params, configs, obs_method, attractor_pos, goal, iters, key, seed = None):
+def mean_times(model_params, strength_params, configs, obs_method, attractor_pos, wind_params, goal, iters, key, seed = None):
     '''
     Take in paramters as we normally would for a single test.
     iters is the amount of loops to get the mean time
@@ -150,14 +159,15 @@ def mean_times(model_params, strength_params, configs, obs_method, attractor_pos
     
     #Some nice code found for formatting nice tables
     #<20 is left alignment with a width of 20 for example. It a string in this case and any remaining space is filled with spaces to 20 characters
-    print(f'| {"Configuration":<20} | {"Average Time":<15} | {"Success Rate":<15} |')
+    print(f'| {"Configuration":<20} | {"Average Time":<15} | {"Success Rate":<15} | {"Deflections":<15} |')
     #Below this we print a number of dashes corresponding the the characters above to split the headers
-    print(f'| {"-"*20} | {"-"*15} | {"-"*15} |')
+    print(f'| {"-"*20} | {"-"*15} | {"-"*15} | {"-"*15} |')
 
     #enumerate the configurations
     for i, config in enumerate(configs):
         name = key[i] #Key is label related to each configuration of obstacles. Easily print name of configuration in the table
-        average_time, success_rate = mean_steps(model_params, strength_params, config, obs_method, attractor_pos, goal, iters, seed)
+        average_time, success_rate , deflections = mean_steps(model_params, strength_params, config, obs_method, attractor_pos, wind_params, goal, iters, seed)
 
         #Here we will apply the same left alignment as above. .2 is decimal points to show. Round to two is reasonable
-        print(f'| {name:<20} | {average_time:<15.2f} | {success_rate:<15.2f} |')
+        print(f'| {name:<20} | {average_time:<15.2f} | {success_rate:<15.2f} | {deflections:<15} |')
+
